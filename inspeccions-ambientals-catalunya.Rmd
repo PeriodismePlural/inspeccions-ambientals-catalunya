@@ -1,0 +1,1028 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+## Anàlisi de les inspeccions ambientals
+
+```{r}
+library(dplyr)
+library(pdftools)
+library(purrr)
+library(stringr)
+library(tesseract)
+```
+
+BBDD extreta de l'(hipermapa del Departament de Territori i Sostenibilitat)[http://sig.gencat.cat/visors/hipermapa.html#param=param&text=Mapa%20Inspeccions%20Ambientals&color=vermell&background=orto_ICC&BBOX=124288.770053,4485000,669711.229947,4752000&layers=FOCUS_INSPECCIONS_AMBIENTALS]
+
+```{r}
+inspeccionsllista <- read.csv("FOCUS_INSPECCIONS_AMBIENTALS.csv", fileEncoding = "UTF-8", stringsAsFactors = F)
+```
+
+Selecció de les empreses amb inspecció l'any 2018
+
+```{r}
+inspeccionsllista2018 <- inspeccionsllista %>% select(IDQA, COORD_X, COORD_Y, ESTABLIMENT, TITULAR, GRUP_ACTIVITAT, INFORME_PROGRAMA_2018, GEOMETRIA) %>% filter(inspeccionsllista$INFORME_PROGRAMA_2018!="-")
+```
+
+#### Inspeccions abans del 2018
+
+```{r}
+complimentsAnt <- ""
+
+for (j in inspeccionsllista2018$INFORME_PROGRAMA_2018) {
+  
+  pdf <- pdf_text(j)
+  text <- ""
+  
+  for (i in pdf) {
+    text <- paste(text, i, sep=" ")
+  }
+  
+  compliment <- str_split(text, "Declaració compliment de l’AA", n=2)
+  compliment <- compliment[[1]][2]
+  
+  compliment <- str_split(compliment, "Dades de l’actuació")
+  complimentn <- compliment[[1]][1]
+  
+  complimentsAnt <- c(complimentsAnt, complimentn)
+
+}
+
+complimentsAnt <- complimentsAnt[2:length(complimentsAnt)]
+
+inspeccionsllista2018$complimentsAnt <- complimentsAnt
+```
+
+Netejar anys que aparèixen al peu de pàgina
+
+```{r}
+inspeccionsllista2018$complimentsAnt <- gsub("Programa d’inspecció ambiental integrada 2018", "", inspeccionsllista2018$complimentsAnt)
+inspeccionsllista2018$complimentsAnt <- gsub("2016_v06_20180307", "", inspeccionsllista2018$complimentsAnt)
+```
+
+**2014**
+
+```{r}
+inspeccionsllista2018$Compliment2014 <- ifelse(grepl("2014", inspeccionsllista2018$complimentsAnt, fixed = T), inspeccionsllista2018$complimentsAnt, NA)
+```
+
+```{r}
+Compliment2014 <- ""
+
+for (i in inspeccionsllista2018$Compliment2014) {
+  
+  complimentn <- str_split(i, "[Nn]o +[Pp]rogramada", n=2)
+  complimentn <- complimentn[[1]][2]
+  complimentn <- substr(complimentn, 0, 300)
+  
+  Compliment2014 <- c(Compliment2014, complimentn)
+
+}
+```
+
+```{r}
+Compliment2014 <- Compliment2014[2:length(Compliment2014)]
+inspeccionsllista2018$Compliment2014 <- Compliment2014
+```
+
+```{r}
+inspeccionsllista2018$Compliment2014Class <- 
+  ifelse(
+grepl("No es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2014, perl=T),
+  "No es garanteix un compliment adequat",
+  ifelse(
+  grepl("Es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2014, perl=T),
+      "Es garanteix un compliment adequat",
+     ifelse(
+     grepl("Es compleix(|en) satisfactòriament", inspeccionsllista2018$Compliment2014, perl=T),
+      "Es compleixen satisfactòriament",
+       ifelse(
+          is.na(inspeccionsllista2018$Compliment2014),
+          NA,
+          "No classificat")
+        )
+      )
+    )
+```
+
+**2015**
+
+```{r}
+inspeccionsllista2018$Compliment2015 <- ifelse(grepl("2015", inspeccionsllista2018$complimentsAnt, fixed = T), inspeccionsllista2018$complimentsAnt, NA)
+```
+
+```{r}
+Compliment2015 <- ""
+
+for (j in inspeccionsllista2018$Compliment2015) {
+ 
+  complimentn <- str_split(j, "2015", n=2)
+  complimentn <- complimentn[[1]][2]
+  complimentn <- str_split(complimentn, "[Nn]o +[Pp]rogramada", n=2)
+  complimentn <- complimentn[[1]][2]
+  complimentn <- substr(complimentn, 0, 300)
+  
+  Compliment2015 <- c(Compliment2015, complimentn)
+
+}
+```
+
+```{r}
+Compliment2015 <- Compliment2014[2:length(Compliment2015)]
+inspeccionsllista2018$Compliment2015 <- Compliment2015
+```
+
+```{r}
+inspeccionsllista2018$Compliment2015Class <- 
+  ifelse(
+grepl("No es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2015, perl=T),
+  "No es garanteix un compliment adequat",
+  ifelse(
+  grepl("Es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2015, perl=T),
+      "Es garanteix un compliment adequat",
+     ifelse(
+     grepl("Es compleix(|en) satisfactòriament", inspeccionsllista2018$Compliment2015, perl=T),
+      "Es compleixen satisfactòriament",
+       ifelse(
+          is.na(inspeccionsllista2018$Compliment2015),
+          NA,
+          "No classificat")
+        )
+      )
+    )
+```
+
+**2016**
+
+```{r}
+inspeccionsllista2018$Compliment2016 <- ifelse(grepl("2016", inspeccionsllista2018$complimentsAnt, fixed = T), inspeccionsllista2018$complimentsAnt, NA)
+```
+
+```{r}
+Compliment2016 <- ""
+
+for (j in inspeccionsllista2018$Compliment2016) {
+  
+  complimentn <- str_split(j, "2016", n=2)
+  complimentn <- complimentn[[1]][2]
+  
+  complimentn <- ifelse(
+    grepl("[Nn]o +[Pp]rogramada", complimentn, perl=T),
+    str_split(complimentn, "[Nn]o +[Pp]rogramada", n=2)[[1]][2],
+    complimentn)
+  
+  complimentn <- substr(complimentn, 0, 300)
+  
+  Compliment2016 <- c(Compliment2016, complimentn)
+
+}
+```
+
+```{r}
+Compliment2016 <- Compliment2016[2:length(Compliment2016)]
+inspeccionsllista2018$Compliment2016 <- Compliment2016
+```
+
+```{r}
+inspeccionsllista2018$Compliment2016Class <- 
+  ifelse(
+grepl("No es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2016, perl=T),
+  "No es garanteix un compliment adequat",
+  ifelse(
+  grepl("Es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2016, perl=T),
+      "Es garanteix un compliment adequat",
+     ifelse(
+     grepl("Es compleix(|en) satisfactòriament", inspeccionsllista2018$Compliment2016, perl=T),
+      "Es compleixen satisfactòriament",
+       ifelse(
+          is.na(inspeccionsllista2018$Compliment2016),
+          NA,
+          "No classificat")
+        )
+      )
+    )
+```
+
+**2017**
+
+```{r}
+inspeccionsllista2018$Compliment2017 <- ifelse(grepl("2017", inspeccionsllista2018$complimentsAnt, fixed = T), inspeccionsllista2018$complimentsAnt, NA)
+```
+
+```{r}
+Compliment2017 <- ""
+
+for (j in inspeccionsllista2018$Compliment2017) {
+  
+  complimentn <- str_split(j, "2017", n=2)
+  complimentn <- complimentn[[1]][2]
+  complimentn <- substr(complimentn, 0, 300)
+  
+  Compliment2017 <- c(Compliment2017, complimentn)
+
+}
+```
+
+```{r}
+Compliment2017 <- Compliment2017[2:length(Compliment2017)]
+inspeccionsllista2018$Compliment2017 <- Compliment2017
+```
+
+```{r}
+inspeccionsllista2018$Compliment2017Class <- 
+  ifelse(
+grepl("No es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2017, perl=T),
+  "No es garanteix un compliment adequat",
+  ifelse(
+  grepl("Es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2017, perl=T),
+      "Es garanteix un compliment adequat",
+     ifelse(
+     grepl("Es compleix(|en) satisfactòriament", inspeccionsllista2018$Compliment2017, perl=T),
+      "Es compleixen satisfactòriament",
+       ifelse(
+          is.na(inspeccionsllista2018$Compliment2017),
+          NA,
+          "No classificat")
+        )
+      )
+    )
+```
+
+### 2018
+
+```{r}
+Compliment2018 <- ""
+
+for (j in inspeccionsllista2018$INFORME_PROGRAMA_2018) {
+  
+  pdf <- pdf_text(j)
+  text <- ""
+  
+  for (i in pdf) {
+    text <- paste(text, i, sep=" ")
+  }
+  
+  complimentn <- str_split(text, "la instal·lació és:", n=2)
+  complimentn <- complimentn[[1]][2]
+  
+  complimentn <- str_split(complimentn, "La correcció dels incompliments", n=2)
+  complimentn <- complimentn[[1]][1]
+  
+  Compliment2018 <- c(Compliment2018, complimentn)
+
+}
+```
+
+```{r}
+Compliment2018 <- Compliment2018[2:length(Compliment2018)]
+inspeccionsllista2018$Compliment2018 <- Compliment2018
+```
+
+Trobar les X
+
+```{r}
+Compliment2018 <- ""
+
+for (j in inspeccionsllista2018$Compliment2018) {
+  
+  complimentn <- str_split(j, "\r\nX", n=2)
+  complimentn <- complimentn[[1]][2]
+  
+  Compliment2018 <- c(Compliment2018, complimentn)
+}
+```
+
+```{r}
+Compliment2018 <- Compliment2018[2:length(Compliment2018)]
+inspeccionsllista2018$Compliment2018 <- Compliment2018
+
+inspeccionsllista2018$Compliment2018 <- substr(inspeccionsllista2018$Compliment2018, 0, 100)
+```
+
+```{r}
+inspeccionsllista2018$Compliment2018Class <- 
+  ifelse(
+grepl("No es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2018, perl=T),
+  "No es garanteix un compliment adequat",
+  ifelse(
+  grepl("Es garanteix\\s*un\\s*compliment\\s*adequat", inspeccionsllista2018$Compliment2018, perl=T),
+      "Es garanteix un compliment adequat",
+     ifelse(
+     grepl("Es compleix(|en) satisfactòriament", inspeccionsllista2018$Compliment2018, perl=T),
+      "Es compleixen satisfactòriament",
+       ifelse(
+          is.na(inspeccionsllista2018$Compliment2018),
+          NA,
+          "No classificat")
+        )
+      )
+    )
+```
+
+### OCR
+
+```{r}
+inspeccionsllista2018OCR <- inspeccionsllista2018 %>% filter(is.na(Compliment2018))
+```
+
+```{r}
+urls <- inspeccionsllista2018OCR$INFORME_PROGRAMA_2018
+destinations <- ""
+
+for (i in inspeccionsllista2018OCR$IDQA) {
+  destination <- paste(i, "pdf", sep=".")
+  destinations <- c(destinations, destination)
+}
+
+destinations <- destinations[2:length(destinations)]
+```
+
+```{r}
+Map(function(u, d) download.file(u, d, mode="wb"), urls, destinations)
+```
+
+```{r}
+tesseract_download("cat")
+textosOCR <- ""
+
+for (j in destinations) {
+  
+  pdfocr <- pdf_ocr_text(j, language = "cat")
+  text <- ""
+  
+  for (i in pdfocr) {
+    text <- paste(text, i, sep=" ")
+  }
+  
+  textosOCR <- c(textosOCR, text)
+}
+
+textosOCR <- textosOCR[2:length(textosOCR)]
+```
+
+```{r}
+textosOCRdf <- data.frame(destinations, textosOCR)
+```
+
+```{r}
+ComplimentOCR <- ""
+
+for (i in textosOCR) {
+  
+  complimentn <- str_split(i, "és:", n=2)
+  complimentn <- complimentn[[1]][2]
+  
+  complimentn <- str_split(complimentn, "La correcció dels incompliments", n=2)
+  complimentn <- complimentn[[1]][1]
+  
+  ComplimentOCR <- c(ComplimentOCR, complimentn)
+}
+
+ComplimentOCR <- ComplimentOCR[2:length(ComplimentOCR)]
+inspeccionsllista2018OCR$Compliment2018OCR <- ComplimentOCR
+```
+
+```{r}
+Compliment2018OCRClass <- ""
+
+for (i in inspeccionsllista2018OCR$Compliment2018OCR) {
+  
+  complimentn <- ifelse(
+    grepl("\nDI", i, fixed = T),
+    str_split(i, "\nDI", n=2)[[1]][2],
+    ifelse(
+      grepl("\nDA", i, fixed = T),
+      str_split(i, "\nDA", n=2)[[1]][2],
+      ifelse(
+        grepl("\nXI", i, fixed = T),
+        str_split(i, "\nXI", n=2)[[1]][2],
+        ifelse(
+          grepl("\nX", i, fixed = T),
+          str_split(i, "\nX", n=2)[[1]][2],
+          ifelse(
+            grepl("\nre", i, fixed = T),
+            str_split(i, "\nre", n=2)[[1]][2],
+            ifelse(
+              grepl("IX", i, fixed = T),
+              str_split(i, "IX", n=2)[[1]][2],
+              ifelse(
+                grepl("\nFJ", i, fixed = T),
+                str_split(i, "\nFJ", n=2)[[1]][2],
+                ifelse(
+                  grepl("\nDl", i, fixed = T),
+                  str_split(i, "\nDl", n=2)[[1]][2],
+                  NA
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+Compliment2018OCRClass <- c(Compliment2018OCRClass, complimentn)
+
+}
+
+Compliment2018OCRClass <- Compliment2018OCRClass[2:length(Compliment2018OCRClass)]
+inspeccionsllista2018OCR$Compliment2018OCRClass <- Compliment2018OCRClass
+```
+
+```{r}
+inspeccionsllista2018OCR$Compliment2018OCRClass <- substr(inspeccionsllista2018OCR$Compliment2018OCRClass, 0, 20)
+```
+
+```{r}
+inspeccionsllista2018OCR$Compliment2018OCRClass <-
+  ifelse(
+    inspeccionsllista2018OCR$Compliment2018OCRClass==" No es garanteix un ",
+        "No es garanteix un compliment adequat",
+        ifelse(
+          inspeccionsllista2018OCR$Compliment2018OCRClass==" Es garanteix un com",
+          "Es garanteix un compliment adequat",
+          ifelse(
+            inspeccionsllista2018OCR$Compliment2018OCRClass==" Es compleixen satis",
+            "Es compleixen satisfactòriament",
+            "No classificat"
+          )
+        )
+      )
+```
+
+
+## Mesures
+
+```{r}
+inspeccionsllista2018OCRmal <- inspeccionsllista2018OCR %>% filter(Compliment2018OCRClass %in% c("No es garanteix un compliment adequat", "Es garanteix un compliment adequat"))
+```
+
+```{r}
+textosOCRdf$destinations <- gsub(".pdf", "", 
+textosOCRdf$destinations)
+
+colnames(textosOCRdf)[1] <- "IDQA"
+```
+
+```{r}
+textosOCRdfmal <- textosOCRdf %>% filter(IDQA %in% inspeccionsllista2018OCRmal$IDQA)
+```
+
+```{r}
+Mesures2018OCRmal <- ""
+
+for (i in textosOCRdfmal$textosOCR) {
+  
+  complimentn <- str_split(i, "Matèries associades als incompliments constatats en l'informe de la inspecció ambiental integrada", n=2)
+  complimentn <- complimentn[[1]][2]
+  
+  Mesures2018OCRmal <- c(Mesures2018OCRmal, complimentn)
+  
+}
+
+Mesures2018OCRmal <- Mesures2018OCRmal[2:length(Mesures2018OCRmal)]
+inspeccionsllista2018OCRmal$Mesures2018OCRmal <- Mesures2018OCRmal
+```
+
+
+```{r}
+Admin <- ""
+Funcionament <- ""
+Atmosferica <- ""
+Soroll <- ""
+Abocaments <- ""
+Qualitat <- ""
+Residus <- ""
+Prescripcions <- ""
+Luminica <- ""
+Incendis <- ""
+Altres <- ""
+
+for (i in inspeccionsllista2018OCRmal$Mesures2018OCRmal) {
+  
+AdminN <- str_extract(i, ".{1,6}Aspectes administratius i prescripcions generals")
+Admin <- c(Admin, AdminN)
+  
+FuncionamentN <- str_extract(i, ".{1,6}Funcionament de les activitats")
+Funcionament <- c(Funcionament, FuncionamentN)
+
+AtmosfericaN <- str_extract(i, ".{1,6}Contaminació atmosfèrica")
+Atmosferica <- c(Atmosferica, AtmosfericaN)
+
+SorollN <- str_extract(i, ".{1,6}Sorolls i vibracions")
+Soroll <- c(Soroll, SorollN)
+
+AbocamentsN <- str_extract(i, ".{1,6}Abocaments")
+Abocaments <- c(Abocaments, AbocamentsN)
+
+QualitatN <- str_extract(i, ".{1,6}Qualitat")
+Qualitat <- c(Qualitat, QualitatN)
+
+ResidusN <- str_extract(i, ".{1,6}Producció (|i gestió )de residus")
+Residus <- c(Residus, ResidusN)
+
+PrescripcionsN <- str_extract(i, ".{1,6}Prescripcions com a gestor de residus")
+Prescripcions <- c(Prescripcions, PrescripcionsN)
+
+LuminicaN <- str_extract(i, ".{1,6}Contaminació lumínica")
+Luminica <- c(Luminica, LuminicaN)
+
+IncendisN <- str_extract(i, ".{1,6}Prevenció d")
+Incendis <- c(Incendis, IncendisN)
+
+AltresN <- str_extract(i, ".{1,6}Altres condicions")
+Altres <- c(Altres, AltresN)
+}
+
+Mesures <- data.frame(inspeccionsllista2018OCRmal$IDQA, Admin[2:length(Admin)], Funcionament[2:length(Funcionament)], Atmosferica[2:length(Atmosferica)], Soroll[2:length(Soroll)], Abocaments[2:length(Abocaments)], Qualitat[2:length(Qualitat)], Residus[2:length(Residus)], Prescripcions[2:length(Prescripcions)], Luminica[2:length(Luminica)], Incendis[2:length(Incendis)], Altres[2:length(Altres)])
+```
+
+```{r}
+colnames(Mesures) <- c("IDQA", "Admin", "Funcionament", "Atmosferica", "Soroll", "Abocaments", "Qualitat", "Residus", "Prescripcions", "Luminica", "Incendis", "Altres")
+```
+
+
+Funció Y/N
+
+```{r}
+YesOrNo <- function(x) {
+
+  ifelse(
+    grepl("\nre", x, fixed = T),
+    1,
+    ifelse(
+      grepl("inf", x, fixed = T),
+      1,
+      ifelse(
+        grepl("pel", x, fixed = T),
+        1,
+        ifelse(
+          grepl("Pd", x, fixed = T),
+          1,
+          ifelse(
+            grepl("DI", x, fixed = T),
+            1,
+            ifelse(
+              grepl("DA", x, fixed = T),
+              1,
+              ifelse(
+                  grepl("X", x, fixed = T),
+                  1,
+                  ifelse(
+                    grepl("hs", x, fixed = T),
+                    1,
+                    ifelse(
+                      grepl("P ", x, fixed = T),
+                      1,
+                      ifelse(
+                        grepl("hit", x, fixed = T),
+                        1,
+                        ifelse(
+                          grepl("if", x, fixed = T),
+                          1,
+                          0
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  
+}
+```
+
+ADMIN
+```{r}
+AdminY <- ""
+
+for (i in Mesures$Admin) {
+  complimentn <- YesOrNo(i)
+  AdminY <- c(AdminY, complimentn)
+}
+
+Mesures$AdminY <- AdminY[2:length(AdminY)] 
+Mesures$AdminY <- as.numeric(Mesures$AdminY)
+```
+
+FUNCIONAMENT
+```{r}
+FuncionamentY <- ""
+
+for (i in Mesures$Funcionament) {
+  complimentn <- YesOrNo(i)
+  FuncionamentY <- c(FuncionamentY, complimentn)
+}
+
+Mesures$FuncionamentY <- FuncionamentY[2:length(FuncionamentY)] 
+Mesures$FuncionamentY <- as.numeric(Mesures$FuncionamentY)
+```
+
+ATMOS
+```{r}
+AtmosfericaY <- ""
+
+for (i in Mesures$Atmosferica) {
+  complimentn <- YesOrNo(i)
+  AtmosfericaY <- c(AtmosfericaY, complimentn)
+}
+
+Mesures$AtmosfericaY <- AtmosfericaY[2:length(AtmosfericaY)] 
+Mesures$AtmosfericaY <- as.numeric(Mesures$AtmosfericaY)
+```
+
+SOROLL
+```{r}
+SorollY <- ""
+
+for (i in Mesures$Soroll) {
+  complimentn <- YesOrNo(i)
+  SorollY <- c(SorollY, complimentn)
+}
+
+Mesures$SorollY <- SorollY[2:length(SorollY)] 
+Mesures$SorollY <- as.numeric(Mesures$SorollY)
+```
+
+ABOCAMENTS
+```{r}
+AbocamentsY <- ""
+
+for (i in Mesures$Abocaments) {
+  complimentn <- YesOrNo(i)
+  AbocamentsY <- c(AbocamentsY, complimentn)
+}
+
+Mesures$AbocamentsY <- AbocamentsY[2:length(AbocamentsY)] 
+Mesures$AbocamentsY <- as.numeric(Mesures$AbocamentsY)
+```
+
+QUALITAT
+```{r}
+QualitatY <- ""
+
+for (i in Mesures$Qualitat) {
+  complimentn <- YesOrNo(i)
+  QualitatY <- c(QualitatY, complimentn)
+}
+
+Mesures$QualitatY <- QualitatY[2:length(QualitatY)] 
+Mesures$QualitatY <- as.numeric(Mesures$QualitatY)
+```
+
+RESIDUS
+```{r}
+ResidusY <- ""
+
+for (i in Mesures$Residus) {
+  complimentn <- YesOrNo(i)
+  ResidusY <- c(ResidusY, complimentn)
+}
+
+Mesures$ResidusY <- ResidusY[2:length(ResidusY)] 
+Mesures$ResidusY <- as.numeric(Mesures$ResidusY)
+```
+
+PRESCRIPCIONS
+```{r}
+PrescripcionsY <- ""
+
+for (i in Mesures$Prescripcions) {
+  complimentn <- YesOrNo(i)
+  PrescripcionsY <- c(PrescripcionsY, complimentn)
+}
+
+Mesures$PrescripcionsY <- PrescripcionsY[2:length(PrescripcionsY)] 
+Mesures$PrescripcionsY <- as.numeric(Mesures$PrescripcionsY)
+```
+
+LUMINICA
+```{r}
+LuminicaY <- ""
+
+for (i in Mesures$Luminica) {
+  complimentn <- YesOrNo(i)
+  LuminicaY <- c(LuminicaY, complimentn)
+}
+
+Mesures$LuminicaY <- LuminicaY[2:length(LuminicaY)] 
+Mesures$LuminicaY <- as.numeric(Mesures$LuminicaY)
+```
+
+INCENDIS
+```{r}
+IncendisY <- ""
+
+for (i in Mesures$Incendis) {
+  complimentn <- YesOrNo(i)
+  IncendisY <- c(IncendisY, complimentn)
+}
+
+Mesures$IncendisY <- IncendisY[2:length(IncendisY)] 
+Mesures$IncendisY <- as.numeric(Mesures$IncendisY)
+```
+
+ALTRES
+```{r}
+AltresY <- ""
+
+for (i in Mesures$Altres) {
+  complimentn <- YesOrNo(i)
+  AltresY <- c(AltresY, complimentn)
+}
+
+Mesures$AltresY <- AltresY[2:length(AltresY)] 
+Mesures$AltresY <- as.numeric(Mesures$AltresY)
+```
+
+### MESURES NO OCR
+
+```{r}
+inspeccionsllista2018mal <- inspeccionsllista2018 %>% filter(Compliment2018Class %in% c("No es garanteix un compliment adequat", "Es garanteix un compliment adequat"))
+```
+
+```{r}
+Mesures2018mal <- ""
+
+for (j in inspeccionsllista2018mal$INFORME_PROGRAMA_2018) {
+  
+  pdf <- pdf_text(j)
+  text <- ""
+  
+  for (i in pdf) {
+    text <- paste(text, i, sep=" ")
+  }
+  
+  complimentn <- str_split(text, "Matèries associades als incompliments constatats en l’informe de la inspecció ambiental integrada", n=2)
+  complimentn <- complimentn[[1]][2]
+  
+  Mesures2018mal <- c(Mesures2018mal, complimentn)
+}
+
+Mesures2018mal <- Mesures2018mal[2:length(Mesures2018mal)]
+inspeccionsllista2018mal$Mesures2018mal <- Mesures2018mal
+```
+
+Trobar les X
+
+```{r}
+Admin <- ""
+Funcionament <- ""
+Atmosferica <- ""
+Soroll <- ""
+Abocaments <- ""
+Qualitat <- ""
+Residus <- ""
+Prescripcions <- ""
+Luminica <- ""
+Incendis <- ""
+Altres <- ""
+
+for (i in inspeccionsllista2018mal$Mesures2018mal) {
+  
+AdminN <- str_extract(i, ".{1,6}Aspectes administratius i prescripcions generals")
+Admin <- c(Admin, AdminN)
+  
+FuncionamentN <- str_extract(i, ".{1,6}Funcionament de les activitats")
+Funcionament <- c(Funcionament, FuncionamentN)
+
+AtmosfericaN <- str_extract(i, ".{1,6}Contaminació atmosfèrica")
+Atmosferica <- c(Atmosferica, AtmosfericaN)
+
+SorollN <- str_extract(i, ".{1,6}Sorolls i vibracions")
+Soroll <- c(Soroll, SorollN)
+
+AbocamentsN <- str_extract(i, ".{1,6}Abocaments")
+Abocaments <- c(Abocaments, AbocamentsN)
+
+QualitatN <- str_extract(i, ".{1,6}Qualitat")
+Qualitat <- c(Qualitat, QualitatN)
+
+ResidusN <- str_extract(i, ".{1,6}Producció (|i gestió )de residus")
+Residus <- c(Residus, ResidusN)
+
+PrescripcionsN <- str_extract(i, ".{1,6}Prescripcions com a gestor de residus")
+Prescripcions <- c(Prescripcions, PrescripcionsN)
+
+LuminicaN <- str_extract(i, ".{1,6}Contaminació lumínica")
+Luminica <- c(Luminica, LuminicaN)
+
+IncendisN <- str_extract(i, ".{1,6}Prevenció d")
+Incendis <- c(Incendis, IncendisN)
+
+AltresN <- str_extract(i, ".{1,6}Altres condicions")
+Altres <- c(Altres, AltresN)
+}
+
+MesuresNoOCR <- data.frame(inspeccionsllista2018mal$IDQA, Admin[2:length(Admin)], Funcionament[2:length(Funcionament)], Atmosferica[2:length(Atmosferica)], Soroll[2:length(Soroll)], Abocaments[2:length(Abocaments)], Qualitat[2:length(Qualitat)], Residus[2:length(Residus)], Prescripcions[2:length(Prescripcions)], Luminica[2:length(Luminica)], Incendis[2:length(Incendis)], Altres[2:length(Altres)])
+```
+
+```{r}
+colnames(MesuresNoOCR) <- c("IDQA", "Admin", "Funcionament", "Atmosferica", "Soroll", "Abocaments", "Qualitat", "Residus", "Prescripcions", "Luminica", "Incendis", "Altres")
+```
+
+ADMIN
+```{r}
+AdminY <- ""
+
+for (i in MesuresNoOCR$Admin) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  AdminY <- c(AdminY, complimentn)
+}
+
+MesuresNoOCR$AdminY <- AdminY[2:length(AdminY)] 
+MesuresNoOCR$AdminY <- as.numeric(MesuresNoOCR$AdminY)
+```
+
+FUNCIONAMENT
+```{r}
+FuncionamentY <- ""
+
+for (i in MesuresNoOCR$Funcionament) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  FuncionamentY <- c(FuncionamentY, complimentn)
+}
+
+MesuresNoOCR$FuncionamentY <- FuncionamentY[2:length(FuncionamentY)] 
+MesuresNoOCR$FuncionamentY <- as.numeric(MesuresNoOCR$FuncionamentY)
+```
+
+ATMOS
+```{r}
+AtmosfericaY <- ""
+
+for (i in MesuresNoOCR$Atmosferica) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  AtmosfericaY <- c(AtmosfericaY, complimentn)
+}
+
+MesuresNoOCR$AtmosfericaY <- AtmosfericaY[2:length(AtmosfericaY)] 
+MesuresNoOCR$AtmosfericaY <- as.numeric(MesuresNoOCR$AtmosfericaY)
+```
+
+SOROLL
+```{r}
+SorollY <- ""
+
+for (i in MesuresNoOCR$Soroll) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  SorollY <- c(SorollY, complimentn)
+}
+
+MesuresNoOCR$SorollY <- SorollY[2:length(SorollY)] 
+MesuresNoOCR$SorollY <- as.numeric(MesuresNoOCR$SorollY)
+```
+
+ABOCAMENTS
+```{r}
+AbocamentsY <- ""
+
+for (i in MesuresNoOCR$Abocaments) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  AbocamentsY <- c(AbocamentsY, complimentn)
+}
+
+MesuresNoOCR$AbocamentsY <- AbocamentsY[2:length(AbocamentsY)] 
+MesuresNoOCR$AbocamentsY <- as.numeric(MesuresNoOCR$AbocamentsY)
+```
+
+QUALITAT
+```{r}
+QualitatY <- ""
+
+for (i in MesuresNoOCR$Qualitat) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  QualitatY <- c(QualitatY, complimentn)
+}
+
+MesuresNoOCR$QualitatY <- QualitatY[2:length(QualitatY)] 
+MesuresNoOCR$QualitatY <- as.numeric(MesuresNoOCR$QualitatY)
+```
+
+RESIDUS
+```{r}
+ResidusY <- ""
+
+for (i in MesuresNoOCR$Residus) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  ResidusY <- c(ResidusY, complimentn)
+}
+
+MesuresNoOCR$ResidusY <- ResidusY[2:length(ResidusY)] 
+MesuresNoOCR$ResidusY <- as.numeric(MesuresNoOCR$ResidusY)
+```
+
+PRESCRIPCIONS
+```{r}
+PrescripcionsY <- ""
+
+for (i in MesuresNoOCR$Prescripcions) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  PrescripcionsY <- c(PrescripcionsY, complimentn)
+}
+
+MesuresNoOCR$PrescripcionsY <- PrescripcionsY[2:length(PrescripcionsY)] 
+MesuresNoOCR$PrescripcionsY <- as.numeric(MesuresNoOCR$PrescripcionsY)
+```
+
+LUMINICA
+```{r}
+LuminicaY <- ""
+
+for (i in MesuresNoOCR$Luminica) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  LuminicaY <- c(LuminicaY, complimentn)
+}
+
+MesuresNoOCR$LuminicaY <- LuminicaY[2:length(LuminicaY)] 
+MesuresNoOCR$LuminicaY <- as.numeric(MesuresNoOCR$LuminicaY)
+```
+
+INCENDIS
+```{r}
+IncendisY <- ""
+
+for (i in MesuresNoOCR$Incendis) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  IncendisY <- c(IncendisY, complimentn)
+}
+
+MesuresNoOCR$IncendisY <- IncendisY[2:length(IncendisY)] 
+MesuresNoOCR$IncendisY <- as.numeric(MesuresNoOCR$IncendisY)
+```
+
+ALTRES
+```{r}
+AltresY <- ""
+
+for (i in MesuresNoOCR$Altres) {
+  complimentn <- ifelse(grepl("X", i, fixed = T), 1, 0)
+  AltresY <- c(AltresY, complimentn)
+}
+
+MesuresNoOCR$AltresY <- AltresY[2:length(AltresY)] 
+MesuresNoOCR$AltresY <- as.numeric(MesuresNoOCR$AltresY)
+```
+
+
+## Ajuntar-ho tot
+
+```{r}
+totCompliment2018 <- bind_rows((inspeccionsllista2018 %>% select(IDQA, Compliment2018Class) %>% filter(!is.na(Compliment2018Class))), (inspeccionsllista2018OCR %>% select(IDQA, Compliment2018OCRClass) %>% mutate(Compliment2018Class=Compliment2018OCRClass) %>% select(-Compliment2018OCRClass)))
+```
+
+```{r}
+totMesures2018 <- bind_rows((Mesures %>% select(IDQA, AdminY, FuncionamentY, AtmosfericaY, SorollY, AbocamentsY, QualitatY, ResidusY, PrescripcionsY, LuminicaY, IncendisY, AltresY)), (MesuresNoOCR %>% select(IDQA, AdminY, FuncionamentY, AtmosfericaY, SorollY, AbocamentsY, QualitatY, ResidusY, PrescripcionsY, LuminicaY, IncendisY, AltresY)))
+```
+
+```{r}
+inspeccionsnet <- left_join((inspeccionsllista2018 %>% select(IDQA, COORD_X, COORD_Y, ESTABLIMENT, TITULAR, GRUP_ACTIVITAT, INFORME_PROGRAMA_2018, GEOMETRIA, Compliment2014Class, Compliment2015Class, Compliment2016Class, Compliment2017Class)),
+left_join(totCompliment2018, totMesures2018, by="IDQA"), by="IDQA")
+```
+
+
+## Anàlisi
+
+```{r}
+inspeccionsnet <- inspeccionsnet %>% mutate(TotalMesuresIncomplertes = AdminY+FuncionamentY+AtmosfericaY+SorollY+AbocamentsY+QualitatY+ResidusY+PrescripcionsY+LuminicaY+IncendisY+AltresY)
+```
+
+Sumatoris
+```{r}
+TotalCompliment <- inspeccionsnet %>% group_by(Compliment2018Class) %>% summarise(n=n()) %>% mutate(ptg=(n/sum(n))*100)
+```
+
+```{r}
+TotalComplimentActivitat <- inspeccionsnet %>% group_by(GRUP_ACTIVITAT, Compliment2018Class) %>% summarise(n=n()) %>% mutate(ptg=(n/sum(n))*100)
+```
+
+```{r}
+MesuresXClass <- inspeccionsnet %>% group_by(Compliment2018Class) %>% summarise(mean(TotalMesuresIncomplertes, na.rm = T), Admin=sum(AdminY), Funcionament=sum(FuncionamentY), Atmosferica=sum(AtmosfericaY), Soroll=sum(SorollY), Abocaments=sum(AbocamentsY), Qualitat=sum(QualitatY), Residus=sum(ResidusY), Prescripcions=sum(PrescripcionsY), Luminica=sum(LuminicaY), Incendis=sum(IncendisY), Altres=sum(AltresY), TotalMesuresIncomplertes=sum(TotalMesuresIncomplertes)) %>% mutate(PtgAdmin=(Admin/TotalMesuresIncomplertes)*100, PtgFuncionament=(Funcionament/TotalMesuresIncomplertes)*100, PtgAtmosferica=(Atmosferica/TotalMesuresIncomplertes)*100, PtgSoroll=(Soroll/TotalMesuresIncomplertes)*100, PtgAbocaments=(Abocaments/TotalMesuresIncomplertes)*100, PtgQualitat=(Qualitat/TotalMesuresIncomplertes)*100, PtgResidus=(Residus/TotalMesuresIncomplertes)*100, PtgPrescripcions=(Prescripcions/TotalMesuresIncomplertes)*100, PtgLuminica=(Luminica/TotalMesuresIncomplertes)*100, PtgIncendis=(Incendis/TotalMesuresIncomplertes)*100, PtgAltres=(Altres/TotalMesuresIncomplertes)*100)
+```
+
+```{r}
+MesuresXClassActivitat <- inspeccionsnet %>% group_by(GRUP_ACTIVITAT, Compliment2018Class) %>% summarise(mean(TotalMesuresIncomplertes, na.rm = T), Admin=sum(AdminY), Funcionament=sum(FuncionamentY), Atmosferica=sum(AtmosfericaY), Soroll=sum(SorollY), Abocaments=sum(AbocamentsY), Qualitat=sum(QualitatY), Residus=sum(ResidusY), Prescripcions=sum(PrescripcionsY), Luminica=sum(LuminicaY), Incendis=sum(IncendisY), Altres=sum(AltresY), TotalMesuresIncomplertes=sum(TotalMesuresIncomplertes)) %>% mutate(PtgAdmin=(Admin/TotalMesuresIncomplertes)*100, PtgFuncionament=(Funcionament/TotalMesuresIncomplertes)*100, PtgAtmosferica=(Atmosferica/TotalMesuresIncomplertes)*100, PtgSoroll=(Soroll/TotalMesuresIncomplertes)*100, PtgAbocaments=(Abocaments/TotalMesuresIncomplertes)*100, PtgQualitat=(Qualitat/TotalMesuresIncomplertes)*100, PtgResidus=(Residus/TotalMesuresIncomplertes)*100, PtgPrescripcions=(Prescripcions/TotalMesuresIncomplertes)*100, PtgLuminica=(Luminica/TotalMesuresIncomplertes)*100, PtgIncendis=(Incendis/TotalMesuresIncomplertes)*100, PtgAltres=(Altres/TotalMesuresIncomplertes)*100)
+```
+
+```{r}
+MesuresTotal <- inspeccionsnet %>% filter(Compliment2018Class %in% c("No es garanteix un compliment adequat", "Es garanteix un compliment adequat")) %>% summarise(mean(TotalMesuresIncomplertes, na.rm = T), Admin=sum(AdminY), Funcionament=sum(FuncionamentY), Atmosferica=sum(AtmosfericaY), Soroll=sum(SorollY), Abocaments=sum(AbocamentsY), Qualitat=sum(QualitatY), Residus=sum(ResidusY), Prescripcions=sum(PrescripcionsY), Luminica=sum(LuminicaY), Incendis=sum(IncendisY), Altres=sum(AltresY), TotalMesuresIncomplertes=sum(TotalMesuresIncomplertes)) %>% mutate(PtgAdmin=(Admin/TotalMesuresIncomplertes)*100, PtgFuncionament=(Funcionament/TotalMesuresIncomplertes)*100, PtgAtmosferica=(Atmosferica/TotalMesuresIncomplertes)*100, PtgSoroll=(Soroll/TotalMesuresIncomplertes)*100, PtgAbocaments=(Abocaments/TotalMesuresIncomplertes)*100, PtgQualitat=(Qualitat/TotalMesuresIncomplertes)*100, PtgResidus=(Residus/TotalMesuresIncomplertes)*100, PtgPrescripcions=(Prescripcions/TotalMesuresIncomplertes)*100, PtgLuminica=(Luminica/TotalMesuresIncomplertes)*100, PtgIncendis=(Incendis/TotalMesuresIncomplertes)*100, PtgAltres=(Altres/TotalMesuresIncomplertes)*100)
+```
+
+```{r}
+write.csv(inspeccionsnet, "inspeccions2018.csv", fileEncoding = "UTF-8")
+```
+
+```{r}
+library(tidyr)
+
+ComplimentAny <- gather((inspeccionsnet %>% select(ESTABLIMENT, Compliment2014Class, Compliment2015Class, Compliment2016Class, Compliment2017Class, Compliment2018Class)), "Any", "Compliment", 2:6)
+```
+
+```{r}
+TotalComplimentAny <- ComplimentAny %>% group_by(Any, Compliment) %>% summarise(n=n()) %>% mutate(ptg=(n/sum(n))*100)
+```
